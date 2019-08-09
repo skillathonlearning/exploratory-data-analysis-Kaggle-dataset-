@@ -1,0 +1,944 @@
+import pandas as pd
+import numpy as np
+import matplotlib
+import matplotlib.pyplot as plt
+%matplotlib inline
+import seaborn as sns
+colors = sns.color_palette()
+heroes = pd.read_csv('superhero-set/heroes_information.csv')
+powers = pd.read_csv('superhero-set/super_hero_powers.csv')
+print(heroes.shape)
+print(powers.shape)
+(734, 11)
+(667, 168)
+heroes.head()
+Unnamed: 0	name	Gender	Eye color	Race	Hair color	Height	Publisher	Skin color	Alignment	Weight
+0	0	A-Bomb	Male	yellow	Human	No Hair	203.0	Marvel Comics	-	good	441.0
+1	1	Abe Sapien	Male	blue	Icthyo Sapien	No Hair	191.0	Dark Horse Comics	blue	good	65.0
+2	2	Abin Sur	Male	blue	Ungaran	No Hair	185.0	DC Comics	red	good	90.0
+3	3	Abomination	Male	green	Human / Radiation	No Hair	203.0	Marvel Comics	-	bad	441.0
+4	4	Abraxas	Male	blue	Cosmic Entity	Black	-99.0	Marvel Comics	-	bad	-99.0
+heroes.loc[heroes['name']=='Superman', 'Alignment']
+646    good
+Name: Alignment, dtype: object
+heroes.loc[heroes['name']=='Thanos', 'Alignment']
+657    bad
+Name: Alignment, dtype: object
+heroes.Alignment.unique()
+array(['good', 'bad', '-', 'neutral'], dtype=object)
+heroes.Alignment.value_counts()
+good       496
+bad        207
+neutral     24
+-            7
+Name: Alignment, dtype: int64
+heroes.name.isna().sum()
+0
+heroes.drop(['Unnamed: 0'], axis=1, inplace=True)
+heroes.head(2)
+name	Gender	Eye color	Race	Hair color	Height	Publisher	Skin color	Alignment	Weight
+0	A-Bomb	Male	yellow	Human	No Hair	203.0	Marvel Comics	-	good	441.0
+1	Abe Sapien	Male	blue	Icthyo Sapien	No Hair	191.0	Dark Horse Comics	blue	good	65.0
+heroes.info()
+<class 'pandas.core.frame.DataFrame'>
+RangeIndex: 734 entries, 0 to 733
+Data columns (total 10 columns):
+name          734 non-null object
+Gender        734 non-null object
+Eye color     734 non-null object
+Race          734 non-null object
+Hair color    734 non-null object
+Height        734 non-null float64
+Publisher     719 non-null object
+Skin color    734 non-null object
+Alignment     734 non-null object
+Weight        732 non-null float64
+dtypes: float64(2), object(8)
+memory usage: 57.4+ KB
+heroes.Publisher.isna().sum()
+15
+heroes.replace(to_replace='-', value='unknown', inplace=True)
+heroes.info()
+<class 'pandas.core.frame.DataFrame'>
+RangeIndex: 734 entries, 0 to 733
+Data columns (total 10 columns):
+name          734 non-null object
+Gender        734 non-null object
+Eye color     734 non-null object
+Race          734 non-null object
+Hair color    734 non-null object
+Height        734 non-null float64
+Publisher     719 non-null object
+Skin color    734 non-null object
+Alignment     734 non-null object
+Weight        732 non-null float64
+dtypes: float64(2), object(8)
+memory usage: 57.4+ KB
+heroes['Weight'].value_counts()
+-99.0     237
+ 79.0      23
+ 54.0      23
+ 81.0      22
+ 90.0      19
+ 52.0      15
+ 86.0      15
+ 59.0      14
+ 56.0      13
+ 77.0      13
+ 61.0      13
+ 101.0     12
+ 50.0      12
+ 88.0      11
+ 63.0      11
+ 83.0      10
+ 95.0      10
+ 74.0      10
+ 65.0       9
+ 72.0       8
+ 68.0       8
+ 104.0      8
+ 135.0      8
+ 57.0       7
+ 97.0       7
+ 99.0       7
+ 117.0      6
+ 108.0      6
+ 55.0       5
+ 70.0       5
+         ... 
+ 14.0       1
+ 356.0      1
+ 105.0      1
+ 324.0      1
+ 360.0      1
+ 236.0      1
+ 36.0       1
+ 140.0      1
+ 128.0      1
+ 248.0      1
+ 16.0       1
+ 45.0       1
+ 234.0      1
+ 96.0       1
+ 82.0       1
+ 76.0       1
+ 198.0      1
+ 116.0      1
+ 176.0      1
+ 170.0      1
+ 47.0       1
+ 78.0       1
+ 27.0       1
+ 25.0       1
+ 178.0      1
+ 132.0      1
+ 38.0       1
+ 412.0      1
+ 320.0      1
+ 855.0      1
+Name: Weight, Length: 135, dtype: int64
+heroes[heroes.Weight.isnull()]
+name	Gender	Eye color	Race	Hair color	Height	Publisher	Skin color	Alignment	Weight
+286	Godzilla	unknown	unknown	Kaiju	unknown	108.0	NaN	grey	bad	NaN
+389	King Kong	Male	yellow	Animal	Black	30.5	NaN	unknown	good	NaN
+# replacing negative values in weights
+heroes.replace(-99.0, np.nan, inplace=True)
+heroes.Weight.isna().sum()
+239
+ht_wt = heroes[['Height', 'Weight']]
+# impute these values
+from sklearn.impute import SimpleImputer
+
+imputer = SimpleImputer(strategy="median")
+
+X = imputer.fit_transform(ht_wt)
+heroes_h_w = pd.DataFrame(X, columns=ht_wt.columns)
+heroes_h_w.head(2)
+Height	Weight
+0	203.0	441.0
+1	191.0	65.0
+heroes.columns
+Index(['name', 'Gender', 'Eye color', 'Race', 'Hair color', 'Height',
+       'Publisher', 'Skin color', 'Alignment', 'Weight'],
+      dtype='object')
+heroes_without_h_w = heroes.drop(['Height','Weight'], axis=1)
+heroes = pd.concat([heroes_without_h_w, heroes_h_w], axis=1)
+heroes.head()
+name	Gender	Eye color	Race	Hair color	Publisher	Skin color	Alignment	Height	Weight
+0	A-Bomb	Male	yellow	Human	No Hair	Marvel Comics	unknown	good	203.0	441.0
+1	Abe Sapien	Male	blue	Icthyo Sapien	No Hair	Dark Horse Comics	blue	good	191.0	65.0
+2	Abin Sur	Male	blue	Ungaran	No Hair	DC Comics	red	good	185.0	90.0
+3	Abomination	Male	green	Human / Radiation	No Hair	Marvel Comics	unknown	bad	203.0	441.0
+4	Abraxas	Male	blue	Cosmic Entity	Black	Marvel Comics	unknown	bad	183.0	81.0
+print(X)
+[[203. 441.]
+ [191.  65.]
+ [185.  90.]
+ ...
+ [ 66.  17.]
+ [170.  57.]
+ [185.  81.]]
+heroes.info()
+<class 'pandas.core.frame.DataFrame'>
+RangeIndex: 734 entries, 0 to 733
+Data columns (total 10 columns):
+name          734 non-null object
+Gender        734 non-null object
+Eye color     734 non-null object
+Race          734 non-null object
+Hair color    734 non-null object
+Publisher     719 non-null object
+Skin color    734 non-null object
+Alignment     734 non-null object
+Height        734 non-null float64
+Weight        734 non-null float64
+dtypes: float64(2), object(8)
+memory usage: 57.4+ KB
+Some Insights
+publisher_series = heroes['Publisher'].value_counts()
+# distribution of publishers by %publications
+
+publishers = list(publisher_series.index)
+publications = list((publisher_series/publisher_series.sum())*100)
+publications[:5]
+[53.963838664812236,
+ 29.902642559109875,
+ 2.642559109874826,
+ 2.5034770514603615,
+ 1.9471488178025034]
+plt.pie(publications,labels=publishers,colors=colors,
+       autopct='%1.2f%%')
+
+# plt.figure(figsize=(20,18), dpi=100)
+
+fig = plt.gcf()
+fig.set_size_inches(10,8)
+
+plt.show()
+
+import plotly.offline as py
+import plotly.graph_objs as go
+from plotly import tools
+
+py.init_notebook_mode(connected=True)
+draw = go.Pie(labels=publishers, values=publications)
+
+layout = go.Layout(
+    title="%age of Publications by Publishers",
+    height=650,
+    width=650
+)
+
+data = [draw]
+fig = go.Figure(data=data, layout=layout)
+py.iplot(fig, filename='publications-by-publishers')
+54%
+29.9%
+2.64%
+2.5%
+1.95%
+1.95%
+0.834%
+0.834%
+0.695%
+0.695%
+0.556%
+0.556%
+0.556%
+0.556%
+0.417%
+0.278%
+0.139%
+0.139%
+0.139%
+0.139%
+0.139%
+0.139%
+0.139%
+0.139%
+%age of Publications by Publishers
+heroes.info()
+<class 'pandas.core.frame.DataFrame'>
+RangeIndex: 734 entries, 0 to 733
+Data columns (total 10 columns):
+name          734 non-null object
+Gender        734 non-null object
+Eye color     734 non-null object
+Race          734 non-null object
+Hair color    734 non-null object
+Publisher     719 non-null object
+Skin color    734 non-null object
+Alignment     734 non-null object
+Height        734 non-null float64
+Weight        734 non-null float64
+dtypes: float64(2), object(8)
+memory usage: 57.4+ KB
+heroes.loc[heroes['name']=='Deadpool']
+name	Gender	Eye color	Race	Hair color	Publisher	Skin color	Alignment	Height	Weight
+212	Deadpool	Male	brown	Mutant	No Hair	Marvel Comics	unknown	neutral	188.0	95.0
+heroes.Alignment.value_counts().index
+Index(['good', 'bad', 'neutral', 'unknown'], dtype='object')
+df = pd.DataFrame(columns=['Publishers','total-heroes','total-villans','total-neutral','total-unknown'])
+
+for publisher in publishers:
+    data = []
+    data.append(publisher)
+    data.append(len(heroes.loc[(heroes['Alignment']=='good') & (heroes['Publisher']==publisher), 'name']))
+    data.append(len(heroes.loc[(heroes['Alignment']=='bad') & (heroes['Publisher']==publisher), 'name']))
+    data.append(len(heroes.loc[(heroes['Alignment']=='neutral') & (heroes['Publisher']==publisher), 'name']))
+    data.append(len(heroes.loc[(heroes['Alignment']=='unknown') & (heroes['Publisher']==publisher), 'name']))
+    
+    df.loc[len(df)] = data
+df
+Publishers	total-heroes	total-villans	total-neutral	total-unknown
+0	Marvel Comics	259	115	11	3
+1	DC Comics	142	59	13	1
+2	NBC - Heroes	16	3	0	0
+3	Dark Horse Comics	12	6	0	0
+4	George Lucas	8	6	0	0
+5	Image Comics	2	11	0	1
+6	Star Trek	5	0	0	1
+7	HarperCollins	6	0	0	0
+8	SyFy	5	0	0	0
+9	Team Epic TV	4	1	0	0
+10	Shueisha	3	1	0	0
+11	Icon Comics	3	1	0	0
+12	IDW Publishing	4	0	0	0
+13	ABC Studios	4	0	0	0
+14	Wildstorm	2	1	0	0
+15	Sony Pictures	2	0	0	0
+16	Microsoft	1	0	0	0
+17	J. K. Rowling	1	0	0	0
+18	Hanna-Barbera	1	0	0	0
+19	South Park	1	0	0	0
+20	Titan Books	1	0	0	0
+21	Rebellion	1	0	0	0
+22	J. R. R. Tolkien	0	1	0	0
+23	Universal Studios	1	0	0	0
+N = len(df)
+
+idx = np.arange(N)
+color_list = ['g','r','b','o']
+gap = 0.35
+
+plt.bar(idx, df['total-heroes'], label='heroes', width=gap)
+plt.bar(idx + gap, df['total-villans'], label='villans', width=gap)
+plt.bar(idx + (2 * gap), df['total-neutral'], label='neutral', width=gap)
+plt.bar(idx + (3 * gap), df['total-unknown'], label='unknown', width=gap)
+
+plt.ylabel('count')
+plt.title('counts by alignments')
+
+plt.xticks(idx + gap / 2, list(df['Publishers']))
+
+plt.figure(figsize=(18,12))
+plt.show()
+
+<Figure size 1296x864 with 0 Axes>
+# using plotly
+
+block1 = go.Bar(
+    x = list(df['Publishers']),
+    y = list(df['total-heroes']),
+    name='total-heroes'
+)
+
+block2 = go.Bar(
+    x = list(df['Publishers']),
+    y = list(df['total-villans']),
+    name='total-villans'
+)
+
+block3 = go.Bar(
+    x = list(df['Publishers']),
+    y = list(df['total-neutral']),
+    name='total-neutral'
+)
+
+block4 = go.Bar(
+    x = list(df['Publishers']),
+    y = list(df['total-unknown']),
+    name='total-unknown'
+)
+
+data_obj = [block1, block2, block3, block4]
+
+layout = go.Layout(
+    title="count of characters by alignment",
+    barmode='group'
+)
+
+fig = go.Figure(data=data_obj, layout=layout)
+py.iplot(fig, filename='count-of-charcters-by-alignment')
+Marvel Comics
+DC Comics
+NBC - Heroes
+Dark Horse Comics
+George Lucas
+Image Comics
+Star Trek
+HarperCollins
+SyFy
+Team Epic TV
+Shueisha
+Icon Comics
+IDW Publishing
+ABC Studios
+Wildstorm
+Sony Pictures
+Microsoft
+J. K. Rowling
+Hanna-Barbera
+South Park
+Titan Books
+Rebellion
+J. R. R. Tolkien
+Universal Studios
+0
+50
+100
+150
+200
+250
+count of characters by alignment
+there are more super heroes than requred!!
+
+heroes.info()
+<class 'pandas.core.frame.DataFrame'>
+RangeIndex: 734 entries, 0 to 733
+Data columns (total 10 columns):
+name          734 non-null object
+Gender        734 non-null object
+Eye color     734 non-null object
+Race          734 non-null object
+Hair color    734 non-null object
+Publisher     719 non-null object
+Skin color    734 non-null object
+Alignment     734 non-null object
+Height        734 non-null float64
+Weight        734 non-null float64
+dtypes: float64(2), object(8)
+memory usage: 57.4+ KB
+# gender distribution
+
+gender_series = heroes['Gender'].value_counts()
+
+genders = list(gender_series.index)
+
+distribution = list((gender_series/gender_series.sum())*100)
+
+draw = go.Pie(labels=genders, values=distribution)
+
+layout = go.Layout(
+    title='overall gender-wise distribution of comic charcters',
+    height=600,
+    width=600
+)
+
+data_obj = [draw]
+
+fig = go.Figure(data=data_obj, layout=layout)
+py.iplot(fig, filename='gender-wise distribution of comic charcters')
+68.8%
+27.2%
+3.95%
+overall gender-wise distribution of comic charcters
+# gender distribution by alignment
+
+heroes_gender_series = heroes['Gender'].loc[heroes['Alignment']=='good'].value_counts()
+heroes_genders = list(heroes_gender_series.index)
+heroes_distribution = list((heroes_gender_series/heroes_gender_series.sum())*100)
+
+villans_gender_series = heroes['Gender'].loc[heroes['Alignment']=='bad'].value_counts()
+villans_genders = list(villans_gender_series.index)
+villans_distribution = list((villans_gender_series/villans_gender_series.sum())*100)
+
+neutral_gender_series = heroes['Gender'].loc[heroes['Alignment']=='neutral'].value_counts()
+neutral_genders = list(neutral_gender_series.index)
+neutral_distribution = list((neutral_gender_series/neutral_gender_series.sum())*100)
+
+unknown_gender_series = heroes['Gender'].loc[heroes['Alignment']=='unknown'].value_counts()
+unknown_genders = list(unknown_gender_series.index)
+unknown_distribution = list((unknown_gender_series/unknown_gender_series.sum())*100)
+fig = {
+    "data":[
+        {
+            "labels": heroes_genders,
+            "values": heroes_distribution,
+            "type": "pie",
+            "hole": 0.4,
+            "name": "heroes",
+            "domain": {"row": 0, "column": 0}
+        },
+        {
+            "labels": villans_genders,
+            "values": villans_distribution,
+            "type": "pie",
+            "hole": 0.4,
+            "name": "villans",
+            "domain": {"row": 0, "column": 1}
+        },
+        {
+            "labels": neutral_genders,
+            "values": neutral_distribution,
+            "type": "pie",
+            "hole": 0.4,
+            "name": "neutral",
+            "domain": {"row": 1, "column": 0}
+        },
+        {
+            "labels": unknown_genders,
+            "values": unknown_distribution,
+            "type": "pie",
+            "hole": 0.4,
+            "name": "unknown",
+            "domain": {"row": 1, "column": 1}
+        }
+    ],
+    
+    "layout": {
+        "title":"Gender distribution by Alignment",
+        "grid": {"rows" : 2, "columns": 2},
+        "annotations": [
+            {"text": "Heroes", "x": 0.19, "y":0.8, "showarrow": False},
+            {"text": "Villans", "x":0.82, "y": 0.77, "showarrow":False},
+            {"text": "Neutrals", "x": 0.19, "y": 0.2, "showarrow": False},
+            {"text": "Unknowns", "x": 0.83, "y": 0.19, "showarrow": False}
+        ],
+        "height": 650,
+        "width": 650
+    }
+}
+
+py.iplot(fig, filename="gender by alignent")
+63.7%
+32.5%
+3.83%
+79.7%
+16.9%
+3.38%
+75%
+16.7%
+8.33%
+85.7%
+14.3%
+Gender distribution by Alignment
+Heroes
+Villans
+Neutrals
+Unknowns
+No gender equality! The world needs more sexy feminine comic characters!
+
+male_df = heroes.loc[heroes['Gender']=='Male']
+female_df = heroes.loc[heroes['Gender']=='Female']
+trace_m = go.Bar(
+    x=male_df['Alignment'].value_counts().index,
+    y=male_df['Alignment'].value_counts().values,
+    name="male"
+)
+
+trace_f = go.Bar(
+    x=female_df['Alignment'].value_counts().index,
+    y=female_df['Alignment'].value_counts().values,
+    name="female"    
+)
+
+data_obj = [trace_m, trace_f]
+
+layout = go.Layout(
+    title="characters by their gender by alignment",
+    barmode='group'
+)
+
+fig = go.Figure(data=data_obj, layout=layout)
+py.iplot(fig, filename='gender by alignment')
+good
+bad
+neutral
+unknown
+0
+50
+100
+150
+200
+250
+300
+characters by their gender by alignment
+heroes.head(2)
+name	Gender	Eye color	Race	Hair color	Publisher	Skin color	Alignment	Height	Weight
+0	A-Bomb	Male	yellow	Human	No Hair	Marvel Comics	unknown	good	203.0	441.0
+1	Abe Sapien	Male	blue	Icthyo Sapien	No Hair	Dark Horse Comics	blue	good	191.0	65.0
+heroes.Race.unique()
+array(['Human', 'Icthyo Sapien', 'Ungaran', 'Human / Radiation',
+       'Cosmic Entity', 'unknown', 'Cyborg', 'Xenomorph XX121', 'Android',
+       'Vampire', 'Mutant', 'God / Eternal', 'Symbiote', 'Atlantean',
+       'Alien', 'Neyaphem', 'New God', 'Alpha', 'Bizarro', 'Inhuman',
+       'Metahuman', 'Demon', 'Human / Clone', 'Human-Kree',
+       'Dathomirian Zabrak', 'Amazon', 'Human / Cosmic',
+       'Human / Altered', 'Kryptonian', 'Kakarantharaian',
+       'Zen-Whoberian', 'Strontian', 'Kaiju', 'Saiyan', 'Gorilla',
+       'Rodian', 'Flora Colossus', 'Human-Vuldarian', 'Asgardian',
+       'Demi-God', 'Eternal', 'Gungan', 'Bolovaxian', 'Animal',
+       'Czarnian', 'Martian', 'Spartoi', 'Planet', 'Luphomoid',
+       'Parademon', 'Yautja', 'Maiar', 'Clone', 'Talokite', 'Korugaran',
+       'Zombie', 'Human-Vulcan', 'Human-Spartoi', 'Tamaranean',
+       'Frost Giant', 'Mutant / Clone', "Yoda's species"], dtype=object)
+trace = go.Bar(
+    x = heroes['Race'].value_counts().index,
+    y = heroes['Race'].value_counts().values,
+    name="Races"
+)
+
+layout = go.Layout(
+    title="distribution across different races"
+)
+
+fig = go.Figure(data=[trace], layout=layout)
+py.iplot(fig, filename='distribution across different races')
+unknown
+Mutant
+Cyborg
+Symbiote
+Kryptonian
+Demon
+Asgardian
+Animal
+Inhuman
+Human / Altered
+Human-Kree
+Frost Giant
+Eternal
+Amazon
+Strontian
+Czarnian
+Rodian
+Yoda's species
+Talokite
+Parademon
+Neyaphem
+Clone
+Bizarro
+Martian
+Yautja
+Zombie
+Human-Vuldarian
+Kakarantharaian
+Korugaran
+Tamaranean
+Zen-Whoberian
+0
+50
+100
+150
+200
+250
+300
+distribution across different races
+heroes['Hair color'].unique()
+array(['No Hair', 'Black', 'Blond', 'Brown', 'unknown', 'White', 'Purple',
+       'Orange', 'Pink', 'Red', 'Auburn', 'Strawberry Blond', 'black',
+       'Blue', 'Green', 'Magenta', 'Brown / Black', 'Brown / White',
+       'blond', 'Silver', 'Red / Grey', 'Grey', 'Orange / White',
+       'Yellow', 'Brownn', 'Gold', 'Red / Orange', 'Indigo',
+       'Red / White', 'Black / Blue'], dtype=object)
+Characters like Prof X (X-men)
+heroes.loc[heroes['Hair color']=='No Hair', 'name']
+0                  A-Bomb
+1              Abe Sapien
+2                Abin Sur
+3             Abomination
+5           Absorbing Man
+17                  Alien
+28              Annihilus
+31           Anti-Monitor
+78          Beta Ray Bill
+91                 Bishop
+102       Black Lightning
+104           Black Manta
+112           Blaquesmith
+120             Bloodhawk
+121           Bloodwraith
+135              Brainiac
+189        Crimson Dynamo
+203              Darkseid
+207           Darth Vader
+212              Deadpool
+216            Demogoblin
+227             Donatello
+230          Doppelganger
+231              Dormammu
+232          Dr Manhattan
+233    Drax the Destroyer
+245               Etrigan
+255         Fin Fang Foom
+261                 Fixer
+279           Ghost Rider
+              ...        
+428             Man-Thing
+432     Martian Manhunter
+446            Metamorpho
+473                 Morph
+479              Mysterio
+487                Nebula
+502         One Punch Man
+504             Onslaught
+528           Professor X
+543               Raphael
+546         Razor-Fist II
+552             Red Skull
+553           Red Tornado
+592             She-Thing
+600         Silver Surfer
+610                 Sobek
+615               Spectre
+637                 Steel
+647           Swamp Thing
+648                 Swarm
+657                Thanos
+660                 Thing
+668           Tiger Shark
+679                Triton
+687              Vanisher
+699                Vision
+700             Vision II
+703               Vulture
+727           Yellow Claw
+730                  Ymir
+Name: name, Length: 75, dtype: object
+# distribution of bald and chacarters with hair
+
+heroes['bald_or_not'] = heroes['Hair color'].where(heroes['Hair color']=='No Hair', other='Hair')
+
+heroes.head()
+name	Gender	Eye color	Race	Hair color	Publisher	Skin color	Alignment	Height	Weight	bald_or_not
+0	A-Bomb	Male	yellow	Human	No Hair	Marvel Comics	unknown	good	203.0	441.0	No Hair
+1	Abe Sapien	Male	blue	Icthyo Sapien	No Hair	Dark Horse Comics	blue	good	191.0	65.0	No Hair
+2	Abin Sur	Male	blue	Ungaran	No Hair	DC Comics	red	good	185.0	90.0	No Hair
+3	Abomination	Male	green	Human / Radiation	No Hair	Marvel Comics	unknown	bad	203.0	441.0	No Hair
+4	Abraxas	Male	blue	Cosmic Entity	Black	Marvel Comics	unknown	bad	183.0	81.0	Hair
+trace = go.Bar(
+    x = heroes['bald_or_not'].value_counts().index,
+    y = heroes['bald_or_not'].value_counts().values,
+    name='bald vs not bald',
+    text=['not bald', 'bald']
+)
+
+layout = go.Layout(
+    title = 'bald vs not bald'
+)
+
+fig = go.Figure(data=[trace], layout=layout)
+py.iplot(fig, filename='bald vs not bald')
+Hair
+No Hair
+0
+100
+200
+300
+400
+500
+600
+bald vs not bald
+powers.head()
+hero_names	Agility	Accelerated Healing	Lantern Power Ring	Dimensional Awareness	Cold Resistance	Durability	Stealth	Energy Absorption	Flight	...	Web Creation	Reality Warping	Odin Force	Symbiote Costume	Speed Force	Phoenix Force	Molecular Dissipation	Vision - Cryo	Omnipresent	Omniscient
+0	3-D Man	True	False	False	False	False	False	False	False	False	...	False	False	False	False	False	False	False	False	False	False
+1	A-Bomb	False	True	False	False	False	True	False	False	False	...	False	False	False	False	False	False	False	False	False	False
+2	Abe Sapien	True	True	False	False	True	True	False	False	False	...	False	False	False	False	False	False	False	False	False	False
+3	Abin Sur	False	False	True	False	False	False	False	False	False	...	False	False	False	False	False	False	False	False	False	False
+4	Abomination	False	True	False	False	False	False	False	False	False	...	False	False	False	False	False	False	False	False	False	False
+5 rows × 168 columns
+
+powers = powers * 1
+powers.head(2)
+hero_names	Agility	Accelerated Healing	Lantern Power Ring	Dimensional Awareness	Cold Resistance	Durability	Stealth	Energy Absorption	Flight	...	Web Creation	Reality Warping	Odin Force	Symbiote Costume	Speed Force	Phoenix Force	Molecular Dissipation	Vision - Cryo	Omnipresent	Omniscient
+0	3-D Man	1	0	0	0	0	0	0	0	0	...	0	0	0	0	0	0	0	0	0	0
+1	A-Bomb	0	1	0	0	0	1	0	0	0	...	0	0	0	0	0	0	0	0	0	0
+2 rows × 168 columns
+
+most superpowerful comic character
+powers.loc[:,'total_powers'] = powers.iloc[:, 1:].sum(axis=1)
+powers.head()
+hero_names	Agility	Accelerated Healing	Lantern Power Ring	Dimensional Awareness	Cold Resistance	Durability	Stealth	Energy Absorption	Flight	...	Reality Warping	Odin Force	Symbiote Costume	Speed Force	Phoenix Force	Molecular Dissipation	Vision - Cryo	Omnipresent	Omniscient	total_powers
+0	3-D Man	1	0	0	0	0	0	0	0	0	...	0	0	0	0	0	0	0	0	0	4.0
+1	A-Bomb	0	1	0	0	0	1	0	0	0	...	0	0	0	0	0	0	0	0	0	7.0
+2	Abe Sapien	1	1	0	0	1	1	0	0	0	...	0	0	0	0	0	0	0	0	0	16.0
+3	Abin Sur	0	0	1	0	0	0	0	0	0	...	0	0	0	0	0	0	0	0	0	1.0
+4	Abomination	0	1	0	0	0	0	0	0	0	...	0	0	0	0	0	0	0	0	0	8.0
+5 rows × 169 columns
+
+powers[['hero_names','total_powers']].head(10)
+hero_names	total_powers
+0	3-D Man	4.0
+1	A-Bomb	7.0
+2	Abe Sapien	16.0
+3	Abin Sur	1.0
+4	Abomination	8.0
+5	Abraxas	14.0
+6	Absorbing Man	11.0
+7	Adam Monroe	3.0
+8	Adam Strange	10.0
+9	Agent Bob	1.0
+# most powerfull superhero
+
+powers.sort_values(by='total_powers', ascending=False).head()
+hero_names	Agility	Accelerated Healing	Lantern Power Ring	Dimensional Awareness	Cold Resistance	Durability	Stealth	Energy Absorption	Flight	...	Reality Warping	Odin Force	Symbiote Costume	Speed Force	Phoenix Force	Molecular Dissipation	Vision - Cryo	Omnipresent	Omniscient	total_powers
+563	Spectre	1	1	0	1	0	0	1	1	1	...	1	0	0	0	0	0	0	0	0	49.0
+18	Amazo	1	0	1	0	0	1	0	0	1	...	0	0	0	0	0	0	0	0	0	44.0
+394	Martian Manhunter	1	0	0	0	0	1	1	0	1	...	0	0	0	0	0	0	0	0	0	35.0
+370	Living Tribunal	1	1	0	1	0	0	1	1	1	...	1	0	0	0	0	0	0	0	0	35.0
+388	Man of Miracles	0	1	0	1	0	0	0	1	0	...	1	0	0	0	0	0	0	1	1	34.0
+5 rows × 169 columns
+
+# using seaborn
+
+plt.figure(figsize=(15,10))
+sns.barplot(powers['hero_names'], powers['total_powers'], alpha=1)
+plt.title("total powers by characters", fontsize=20)
+plt.xticks(rotation=90)
+plt.ylabel("total powers", fontsize=14)
+plt.xlabel("comic characters", fontsize=14)
+plt.show()
+
+# using plotly
+
+trace = go.Bar(
+    x=powers['hero_names'],
+    y=powers['total_powers'],
+    text = ['names','total_powers']
+)
+
+layout = go.Layout(
+    title = "comic character by total powers they have"
+)
+
+fig = go.Figure(data=[trace], layout=layout)
+py.iplot(fig, filename="most powerful superhero")
+3-D Man
+Ajax
+Angela
+Arachne
+Atom III
+Batgirl VI
+Big Daddy
+Bizarro-Girl
+Black Vulcan
+Bloodhawk
+Brainiac
+Cannonball
+Carnage
+Chuck Norris
+Crystal
+Darkseid
+Dementor
+Donatello
+Elongated Man
+Faora
+Flash III
+Genesis
+Gravity
+Harley Quinn
+Hellgramite
+Hybrid
+Isis
+Jessica Jones
+Justice
+King Kong
+Leader
+Lizard
+Machine Man
+Master Brood
+Metamorpho
+Mister Mxyzptlk
+Mr Incredible
+Nick Fury
+Onslaught
+Phantom Girl
+Psylocke
+Rambo
+Red Tornado
+Robin V
+Scarecrow
+Shatterstar
+Sinestro
+Speedball
+Starfire
+Supergirl
+Tempest
+Tigra
+Ultragirl
+Vibe
+Wasp
+X-Man
+0
+10
+20
+30
+40
+50
+comic character by total powers they have
+top_30_powerful = powers.sort_values('total_powers', ascending=False).head(30)
+
+trace = go.Bar(
+    x = top_30_powerful['hero_names'],
+    y = top_30_powerful['total_powers'],
+    text = ['names', 'total_powers']
+)
+
+layout =go.Layout(
+    title="top 30 most powerful hero"
+)
+
+fig = go.Figure(data=[trace], layout=layout)
+py.iplot(fig, filename="top 30")
+Spectre
+Amazo
+Martian Manhunter
+Living Tribunal
+Man of Miracles
+Captain Marvel
+T-X
+Galactus
+T-1000
+One-Above-All
+Mister Mxyzptlk
+Thanos
+Odin
+Wonder Woman
+Cable
+Franklin Richards
+Superman
+Dr Manhattan
+Darkseid
+Captain Atom
+Supergirl
+Alex Mercer
+Legion
+Venompool
+Darth Vader
+Captain Planet
+Ultron
+Luke Skywalker
+Goku
+Nova
+0
+10
+20
+30
+40
+50
+top 30 most powerful hero
+Q1. Top 5 insights of your fav super hero
+Q2. Find who can actually defeat Thanos without using any super power?
+Q3. Top 3 heaviest characters who are also super agile. (agile means super active/quick)
+Q4. calculate BMI index for each character? And find three Obese Super "hero" saving the world with a fat belly?
+BMI=weights(kg)heights2(m2)
+ 
+`
+
+BMI           Body Status
+-------------------------
+below 19      Underweight
+19 - 24       Normal
+25 - 29       Overweight
+30 and above  Obese
+`
